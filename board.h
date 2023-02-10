@@ -38,9 +38,9 @@ struct ESP8266_board {
   ESP8266_board(const char *Name,
                 void (*status_indication_func_)(enum ConnectionStatus_t),
                 const String Usage = "<p><strong>Usage:</strong><br>"
-                  "Available URL commands are (like is <em>http://address/command</em>)<ol>:"
+                  "Available URL commands are (like in <em>http://address/command</em>):<ol>"
                   "<li> nothing - outputs this screen</li>"
-                  "<li> config?ssid=<em>string</em>&pass=<em>string</em></li></ol></p><br>",
+                  "<li> config?ssid=<em>string</em>&pass=<em>string</em></li></ol></p>",
                 const char *default_ssid = nullptr,
                 const char *default_pass = nullptr) : server(80), status_indication_func(status_indication_func_),
                                                       WiFi_Around(scan())  {
@@ -79,7 +79,7 @@ struct ESP8266_board {
     }
 
     // setup Web Server
-    server.on("/", HTTP_GET, [&](AsyncWebServerRequest *request) {
+    server.on("/", HTTP_GET, [&,Usage](AsyncWebServerRequest *request) {
       String content;
       String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
       content = String("<!DOCTYPE HTML>\r\n<html>Hello from <b>") + Name + "</b> at IP: ";
