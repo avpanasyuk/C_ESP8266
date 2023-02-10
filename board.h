@@ -15,15 +15,15 @@
 #include "../C_General/Error.h"
 
 struct ESP8266_board {
+  enum ConnectionStatus_t { IDLE,
+                            TRYING_TO_CONNECT,
+                            AP_MODE,
+                            CONNECTED };
   static constexpr char Version[] = "0.0";
   static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
   AsyncWebServer server;
 
  protected:
-  enum ConnectionStatus_t { IDLE,
-                            TRYING_TO_CONNECT,
-                            AP_MODE,
-                            CONNECTED };
   void (*status_indication_func)(enum ConnectionStatus_t);
 
   String WiFi_Around;
@@ -37,10 +37,13 @@ struct ESP8266_board {
    */
   ESP8266_board(const char *Name,
                 void (*status_indication_func_)(enum ConnectionStatus_t),
-                const String Usage = "",
+                const String Usage = "<p><strong>Usage:</strong><br>"
+                  "Available URL commands are (like is <em>http://address/command</em>)<ol>:"
+                  "<li> nothing - outputs this screen</li>"
+                  "<li> config?ssid=<em>string</em>&pass=<em>string</em></li></ol></p><br>",
                 const char *default_ssid = nullptr,
-                const char *default_pass = nullptr) : status_indication_func(status_indication_func_),
-                                                      WiFi_Around(scan()) {
+                const char *default_pass = nullptr) : server(80), status_indication_func(status_indication_func_),
+                                                      WiFi_Around(scan())  {
     // if AutoConnect is enabled the WIFI library tries to connect to the last WiFi configuration that it remembers
     // on startup
     if (WiFi.getAutoConnect()) {
@@ -113,7 +116,7 @@ struct ESP8266_board {
   }
 
  public:
-  static const String &scan() {
+  static const String scan() {
     String WiFi_Around;
     int n = WiFi.scanNetworks();
 
