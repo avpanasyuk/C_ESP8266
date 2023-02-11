@@ -19,7 +19,7 @@ struct ESP8266_board {
                             TRYING_TO_CONNECT,
                             AP_MODE,
                             CONNECTED };
-  static constexpr char Version[] = "0.0";
+  static constexpr char Version[] = "0.1";
   static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
   AsyncWebServer server;
 
