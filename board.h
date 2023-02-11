@@ -7,19 +7,17 @@
 #endif
 
 #include <AsyncElegantOTA.h>
-#include <EEPROM.h>
-#include <ESP8266mDNS.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-#include "../C_General/Error.h"
+#include <C_General/Error.h>
 
-struct ESP8266_board {
+struct ESP_board {
   enum ConnectionStatus_t { IDLE,
                             TRYING_TO_CONNECT,
                             AP_MODE,
                             CONNECTED };
-  static constexpr char Version[] = "0.1";
+  static constexpr char Version[] = "0.2";
   static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
   AsyncWebServer server;
 
@@ -35,7 +33,7 @@ struct ESP8266_board {
    *
    * @param Name_ c_str name as seen by DNS
    */
-  ESP8266_board(const char *Name,
+  ESP_board(const char *Name,
                 void (*status_indication_func_)(enum ConnectionStatus_t),
                 const String Usage = "<p><strong>Usage:</strong><br>"
                   "Available URL commands are (like in <em>http://address/command</em>):<ol>"
@@ -71,9 +69,6 @@ struct ESP8266_board {
       ip = WiFi.localIP();
       debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
       status_indication_func(CONNECTED);
-      if (!MDNS.begin(Name)) {  // Start the mDNS responder for esp8266.local
-        debug_printf("Error setting up MDNS responder!");
-      }
       WiFi.setAutoConnect(true);
       WiFi.setAutoReconnect(true);
     }
@@ -136,4 +131,4 @@ struct ESP8266_board {
     return WiFi_Around;
   }  // scan
 
-};  // ESP8266_board
+};  // ESP_board
