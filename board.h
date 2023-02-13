@@ -19,7 +19,7 @@ struct ESP_board {
                             TRYING_TO_CONNECT,
                             AP_MODE,
                             CONNECTED };
-  static constexpr char Version[] = "0.2";
+  static constexpr char Version[] = "0.4";
   static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
   AsyncWebServer server;
 
@@ -29,11 +29,19 @@ struct ESP_board {
   String WiFi_Around;
   IPAddress ip;
 
+  void post_connection() {
+    ip = WiFi.localIP();
+      debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+      status_indication_func(CONNECTED);
+      WiFi.setAutoConnect(true);
+      WiFi.setAutoReconnect(true);
+  } // post_connection
+
  public:
   /**
-   * @brief initializes esp8266 board
+   * @brief initializes esp8266 or esp32 board
    *
-   * @param Name_ c_str name as seen by DNS
+   * @param Name c_str name as seen by DNS
    */
   ESP_board(const char *Name,
                 void (*status_indication_func_)(enum ConnectionStatus_t),
@@ -54,11 +62,12 @@ struct ESP_board {
     // trying default WiFI configuration if present
     if (!WiFi.isConnected() && default_ssid != nullptr && default_pass != nullptr) {
       WiFi.mode(WIFI_STA);
-      WiFi.hostname(Name);
       WiFi.begin(default_ssid, default_pass);
+      WiFi.setHostname(Name);
       status_indication_func(TRYING_TO_CONNECT);
       WiFi.waitForConnectResult();
-    }
+    } else
+      post_connection();
 
     // if still not connected switching to AP mode
     if (!WiFi.isConnected()) {
@@ -67,13 +76,8 @@ struct ESP_board {
       ip = WiFi.softAPIP();
       status_indication_func(AP_MODE);
       debug_printf("Connecting in AP mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
-    } else {
-      ip = WiFi.localIP();
-      debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
-      status_indication_func(CONNECTED);
-      WiFi.setAutoConnect(true);
-      WiFi.setAutoReconnect(true);
-    }
+    } else
+      post_connection();
 
     // setup Web Server
     server.on("/", HTTP_GET, [&,Usage](AsyncWebServerRequest *request) {
