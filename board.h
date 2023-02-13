@@ -2,12 +2,14 @@
 
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>  // https://github.com/esp8266/Arduino
+#include <ESPAsyncTCP.h>
+#define WIFI_AUTH_OPEN AUTH_OPEN 
 #else
 #include <WiFi.h>
+#include <AsyncTCP.h>
 #endif
 
 #include <AsyncElegantOTA.h>
-#include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
 #include <C_General/Error.h>
@@ -98,11 +100,11 @@ struct ESP_board {
         WiFi.disconnect();
         delay(1000);
         WiFi.mode(WIFI_STA);
-        WiFi.begin(qsid, qpass);
+        WiFi.begin(qsid.c_str(), qpass.c_str());
         status_indication_func(TRYING_TO_CONNECT);
         WiFi.setAutoConnect(WiFi.waitForConnectResult() == WL_CONNECTED);
         delay(1000);
-        ESP.reset();
+        ESP.restart();
       }
     });
 
@@ -124,7 +126,7 @@ struct ESP_board {
       WiFi_Around += WiFi.RSSI(i);
 
       WiFi_Around += ")";
-      WiFi_Around += (WiFi.encryptionType(i) == ENC_TYPE_NONE) ? " " : "*";
+      WiFi_Around += (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " " : "*";
       WiFi_Around += "</li>";
     }
     WiFi_Around += "</ol>";
@@ -132,3 +134,5 @@ struct ESP_board {
   }  // scan
 
 };  // ESP_board
+
+constexpr char ESP_board::Version[];
