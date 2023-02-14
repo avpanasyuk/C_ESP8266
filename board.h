@@ -3,16 +3,15 @@
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>  // https://github.com/esp8266/Arduino
 #include <ESPAsyncTCP.h>
-#define WIFI_AUTH_OPEN AUTH_OPEN 
+#define WIFI_AUTH_OPEN AUTH_OPEN
 #else
-#include <WiFi.h>
 #include <AsyncTCP.h>
+#include <WiFi.h>
 #endif
 
 #include <AsyncElegantOTA.h>
-#include <ESPAsyncWebServer.h>
-
 #include <C_General/Error.h>
+#include <ESPAsyncWebServer.h>
 
 struct ESP_board {
   enum ConnectionStatus_t { IDLE,
@@ -31,11 +30,11 @@ struct ESP_board {
 
   void post_connection() {
     ip = WiFi.localIP();
-      debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
-      status_indication_func(CONNECTED);
-      WiFi.setAutoConnect(true);
-      WiFi.setAutoReconnect(true);
-  } // post_connection
+    debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+    status_indication_func(CONNECTED);
+    WiFi.setAutoConnect(true);
+    WiFi.setAutoReconnect(true);
+  }  // post_connection
 
  public:
   /**
@@ -44,14 +43,17 @@ struct ESP_board {
    * @param Name c_str name as seen by DNS
    */
   ESP_board(const char *Name,
-                void (*status_indication_func_)(enum ConnectionStatus_t),
-                const String Usage = "<p><strong>Usage:</strong><br>"
-                  "Available URL commands are (like in <em>http://address/command</em>):<ol>"
-                  "<li> nothing - outputs this screen</li>"
-                  "<li> config?ssid=<em>string</em>&pass=<em>string</em></li></ol></p>",
-                const char *default_ssid = nullptr,
-                const char *default_pass = nullptr) : server(80), status_indication_func(status_indication_func_),
-                                                      WiFi_Around(scan())  {
+            void (*status_indication_func_)(enum ConnectionStatus_t),
+            const String Usage =
+                "<p><strong>Usage:</strong><br>"
+                "Available URL commands are (like in <em>http://address/command</em>):<ol>"
+                "<li> nothing - outputs this screen</li>"
+                "<li> pin?i=n - return pin n settings</li>"
+                "<li> pin?i=n[&set=(0|1)] - set pin value</li>"
+                "<li> pin?i=n[&mode=(0|1)] - set pin mode</li>"
+                "<li> config?ssid=<em>string</em>&pass=<em>string</em></li></ol></p>",
+            const char *default_ssid = nullptr,
+            const char *default_pass = nullptr) : server(80), status_indication_func(status_indication_func_), WiFi_Around(scan()) {
     // if AutoConnect is enabled the WIFI library tries to connect to the last WiFi configuration that it remembers
     // on startup
     if (WiFi.getAutoConnect()) {
@@ -80,7 +82,7 @@ struct ESP_board {
       post_connection();
 
     // setup Web Server
-    server.on("/", HTTP_GET, [&,Usage](AsyncWebServerRequest *request) {
+    server.on("/", HTTP_GET, [&, Usage](AsyncWebServerRequest *request) {
       String content;
       String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
       content = String("<!DOCTYPE HTML>\r\n<html>Hello from <b>") + Name + "</b> at IP: ";
@@ -110,6 +112,28 @@ struct ESP_board {
         delay(1000);
         ESP.restart();
       }
+    });
+
+    server.on("/pin", HTTP_GET, [&](AsyncWebServerRequest *request) {  // URL xxx.xxx.xxx.xxx/pin?i=n[&analog][&set=x][&mode=x]
+      if (request->hasArg("i")) {
+        uint8_t Pin = request->arg("i").toInt();
+        bool Analog = request->hasArg("analog");
+        if (request->hasArg("set") || request->hasArg("mode")) {
+          if(request->hasArg("mode")) {
+            pinMode(Pin, request->arg("mode").toInt());
+            request->send(200, "text/plain", "Pin mode is set!");
+          }
+          if(request->hasArg("set")) {
+            if (Analog) analogWrite(Pin, request->arg("set").toInt());
+            else digitalWrite(Pin, request->arg("set").toInt());
+            request->send(200, "text/plain", "Pin is set!");
+          }
+        } else {
+          if(Analog) request->send(200, "text/plain", String("Analog pin #") + Pin + " reads " + analogRead(Pin));
+          else request->send(200, "text/plain", String("Digital pin #") + Pin + " reads " + digitalRead(Pin));
+        }
+      } else
+        request->send(200, "text/plain", "No pin index!");
     });
 
     AsyncElegantOTA.begin(&server);  // Start ElegantOTA
