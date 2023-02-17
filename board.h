@@ -1,3 +1,10 @@
+/**
+ * @author Sasha
+ * 
+ * @brief class for ESP8266 or ESP32, implements commonly used WiFi functions, including OTA and async server.
+ * @details on both board WiFi modules remember the last configuration by it;self, we will rely on it.
+*/
+
 #pragma once
 
 #if defined(ESP8266)
@@ -41,6 +48,10 @@ struct ESP_board {
    * @brief initializes esp8266 or esp32 board
    *
    * @param Name c_str name as seen by DNS
+   * @param status_indication_func_ function which will be called by the class when commection status changes
+   * @param Usage html code which will be included on the default Web Page
+   * @param default_ssid if stored configuration failed to connect try this one
+   * @param default_pass if stored configuration failed to connect try this one
    */
   ESP_board(const char *Name,
             void (*status_indication_func_)(enum ConnectionStatus_t),
@@ -54,6 +65,7 @@ struct ESP_board {
                 "<li> config?ssid=<em>string</em>&pass=<em>string</em></li></ol></p>",
             const char *default_ssid = nullptr,
             const char *default_pass = nullptr) : server(80), status_indication_func(status_indication_func_), WiFi_Around(scan()) {
+    
     // if AutoConnect is enabled the WIFI library tries to connect to the last WiFi configuration that it remembers
     // on startup
     if (WiFi.getAutoConnect()) {
