@@ -1,9 +1,9 @@
 /**
  * @author Sasha
- * 
+ *
  * @brief class for ESP8266 or ESP32, implements commonly used WiFi functions, including OTA and async server.
  * @details on both board WiFi modules remember the last configuration by it;self, we will rely on it.
-*/
+ */
 
 #pragma once
 
@@ -65,7 +65,6 @@ struct ESP_board {
                 "<li> config?ssid=<em>string</em>&pass=<em>string</em></li></ol></p>",
             const char *default_ssid = nullptr,
             const char *default_pass = nullptr) : server(80), status_indication_func(status_indication_func_), WiFi_Around(scan()) {
-    
     // if AutoConnect is enabled the WIFI library tries to connect to the last WiFi configuration that it remembers
     // on startup
     if (WiFi.getAutoConnect()) {
@@ -97,6 +96,7 @@ struct ESP_board {
     server.on("/", HTTP_GET, [&, Usage](AsyncWebServerRequest *request) {
       String content;
       String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
+      debug_printf(Name);
       content = String("<!DOCTYPE HTML>\r\n<html>Hello from <b>") + Name + "</b> at IP: ";
       content += ipStr + ", MAC: " + WiFi.macAddress() + ", Version: " + Version;
       content += Usage;
@@ -131,18 +131,22 @@ struct ESP_board {
         uint8_t Pin = request->arg("i").toInt();
         bool Analog = request->hasArg("analog");
         if (request->hasArg("set") || request->hasArg("mode")) {
-          if(request->hasArg("mode")) {
+          if (request->hasArg("mode")) {
             pinMode(Pin, request->arg("mode").toInt());
             request->send(200, "text/plain", "Pin mode is set!");
           }
-          if(request->hasArg("set")) {
-            if (Analog) analogWrite(Pin, request->arg("set").toInt());
-            else digitalWrite(Pin, request->arg("set").toInt());
+          if (request->hasArg("set")) {
+            if (Analog)
+              analogWrite(Pin, request->arg("set").toInt());
+            else
+              digitalWrite(Pin, request->arg("set").toInt());
             request->send(200, "text/plain", "Pin is set!");
           }
         } else {
-          if(Analog) request->send(200, "text/plain", String("Analog pin #") + Pin + " reads " + analogRead(Pin));
-          else request->send(200, "text/plain", String("Digital pin #") + Pin + " reads " + digitalRead(Pin));
+          if (Analog)
+            request->send(200, "text/plain", String("Analog pin #") + Pin + " reads " + analogRead(Pin));
+          else
+            request->send(200, "text/plain", String("Digital pin #") + Pin + " reads " + digitalRead(Pin));
         }
       } else
         request->send(200, "text/plain", "No pin index!");
@@ -172,7 +176,15 @@ struct ESP_board {
     WiFi_Around += "</ol>";
     return WiFi_Around;
   }  // scan
-
-};  // ESP_board
+};   // ESP_board
 
 constexpr char ESP_board::Version[];
+
+static const String GenerateHTML(String html_body, uint16_t AutoRefresh_s = 0, const char *title = nullptr) {
+  String out = "<!DOCTYPE html><html><head>";
+  if (title != nullptr) out += "<title>" + String(title) + "</title>";
+  if (AutoRefresh_s != 0)
+    out += "<meta http-equiv=\"refresh\" content=\"" + String(AutoRefresh_s) + "\">";
+  out += "</head><body>" + html_body + "</body></html>";
+  return out;
+}  // GenerateAutoRefreshHTML
