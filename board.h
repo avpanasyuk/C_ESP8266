@@ -27,8 +27,7 @@ struct ESP_board {
     AP_MODE,
     CONNECTED
   };
-  static constexpr char Version[] = "0.4";
-  static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
+    static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
   AsyncWebServer server;
 
 protected:
@@ -37,10 +36,11 @@ protected:
   String WiFi_Around;
   IPAddress ip;
   const char *Name;
+  const char *Version;
 
   void post_connection() {
     ip = WiFi.localIP();
-    debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+    // debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
     status_indication_func(CONNECTED);
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
@@ -57,11 +57,12 @@ public:
    * @param default_pass if stored configuration failed to connect try this one
    */
   ESP_board(const char *Name_,
+    const char *Version_, 
     void (*status_indication_func_)(enum ConnectionStatus_t),
     const String AddUsage = "",
     const char *default_ssid = nullptr,
     const char *default_pass = nullptr): server(80), status_indication_func(status_indication_func_), WiFi_Around(scan()),
-    Name(Name_) {
+    Name(Name_), Version(Version_) {
     // if AutoConnect is enabled the WIFI library tries to connect to the last WiFi configuration that it remembers
     // on startup
     if(WiFi.getAutoConnect()) {
@@ -85,7 +86,7 @@ public:
       WiFi.softAP(Name, "");
       ip = WiFi.softAPIP();
       status_indication_func(AP_MODE);
-      debug_printf("Connecting in AP mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+      // debug_printf("Connecting in AP mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
     } else
       post_connection();
 
@@ -93,10 +94,10 @@ public:
     server.on("/", HTTP_GET, [&, AddUsage](AsyncWebServerRequest *request) {
       String content;
       String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
-      debug_printf(Name);
+      // debug_printf(Name);
       content = String("<!DOCTYPE HTML>\r\n<html>Hello from <b>") + Name + "</b> at IP: ";
       content += ipStr + ", MAC: " + WiFi.macAddress() + ", Version: " + Version;
-      content += "<p><strong>Usage:</strong><br>"
+      content += F("<p><strong>Usage:</strong><br>"
         "Available URL commands are (like in <em>http://address/command</em>):<ol>"
         "<li> nothing - outputs this screen</li>"
         "<li> pin?i=n - return pin n settings</li>"
@@ -104,12 +105,12 @@ public:
         "<li> pin?i=n[&mode=(0|1)] - set pin mode</li>"
         "<li> config?ssid=<em>string</em>&pass=<em>string</em></li>"
         "<li> reset - reboots MCU</li>"
-        "<li> update - update firmware page</li>";
+        "<li> update - update firmware page</li>");
       content += AddUsage;
       content += "</ol></p><p>WiFi networks:</p>";
       content += "<p>";
       content += WiFi_Around;
-      content += String("</p><form method='get' action='config'><label>SSID: </label><input name='ssid' length=") + (STR_SIZE - 1) +
+      content += String(F("</p><form method='get' action='config'><label>SSID: </label><input name='ssid' length=")) + (STR_SIZE - 1) +
         " value='" + WiFi.SSID() + "'><input name='pass' length=" + (STR_SIZE - 1) +
         "><input type='submit'></html>";
       request->send(200, "text/html", content);
@@ -189,8 +190,6 @@ public:
     return WiFi_Around;
   }  // scan
 };   // ESP_board
-
-constexpr char ESP_board::Version[];
 
 static const String GenerateHTML(const String &html_body, uint16_t AutoRefresh_s = 0, const char *title = nullptr) {
   String out = "<!DOCTYPE html><html><head>";
