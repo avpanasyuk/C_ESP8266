@@ -40,7 +40,7 @@ protected:
 
   void post_connection() {
     ip = WiFi.localIP();
-    // debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+    debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
     status_indication_func(CONNECTED);
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
@@ -73,8 +73,8 @@ public:
     // trying default WiFI configuration if present
     if(!WiFi.isConnected() && default_ssid != nullptr && default_pass != nullptr) {
       WiFi.mode(WIFI_STA);
+      WiFi.hostname(Name);
       WiFi.begin(default_ssid, default_pass);
-      WiFi.setHostname(Name);
       status_indication_func(TRYING_TO_CONNECT);
       WiFi.waitForConnectResult();
     } else
@@ -86,7 +86,7 @@ public:
       WiFi.softAP(Name, "");
       ip = WiFi.softAPIP();
       status_indication_func(AP_MODE);
-      // debug_printf("Connecting in AP mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+      debug_printf("Connecting in AP mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
     } else
       post_connection();
 
