@@ -201,4 +201,4 @@ static const String GenerateHTML(const String &html_body, uint16_t AutoRefresh_s
 }  // GenerateAutoRefreshHTML
 
 // following define disables interrupts but enables them does not matter how function has returned
-#define PAUSE_INTERRUPTS struct _t { _t() { noInterrupts(); } ~_t() { interrupts(); } } _;
+#define PAUSE_INTERRUPTS struct _t { _t() { noInterrupts(); } ~_t() { interrupts(); } } _
