@@ -40,7 +40,7 @@ protected:
 
   void post_connection() {
     ip = WiFi.localIP();
-    // debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+    debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
     status_indication_func(CONNECTED);
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
