@@ -17,7 +17,7 @@
 #endif
 
 #include <AsyncElegantOTA.h>
-#include <C_General/Error.h>
+#include "../C_General/Error.h"
 #include <ESPAsyncWebServer.h>
 
 struct ESP_board {
@@ -27,8 +27,9 @@ struct ESP_board {
     AP_MODE,
     CONNECTED
   };
-    static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
-  AsyncWebServer server;
+
+static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
+AsyncWebServer server;
 
 protected:
   void (*status_indication_func)(enum ConnectionStatus_t);
