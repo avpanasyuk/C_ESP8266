@@ -16,9 +16,14 @@
 #include <WiFi.h>
 #endif
 
-#include <AsyncElegantOTA.h>
-#include "../C_General/Error.h"
 #include <ESPAsyncWebServer.h>
+#ifdef DO_ELEGANT_OTA
+#include <AsyncElegantOTA.h>
+#else
+#include <ArduinoOTA.h>
+#endif
+
+#include "../C_General/Error.h"
 
 struct ESP_board {
   enum ConnectionStatus_t {
@@ -108,7 +113,7 @@ public:
         "<li> reset - reboots MCU</li>"
         "<li> update - update firmware page</li>");
       content += AddUsage;
-      content += "</ol></p><p>WiFi networks:</p>";
+      content += "</ol></p><p><b>WiFi networks:</b></p>";
       content += "<p>";
       content += WiFi_Around;
       content += String(F("</p><form method='get' action='config'><label>SSID: </label><input name='ssid' length=")) + (STR_SIZE - 1) +
@@ -166,7 +171,11 @@ public:
       ESP.restart();
     });
 
+#ifdef DO_ELEGANT_OTA
     AsyncElegantOTA.begin(&server);  // Start ElegantOTA
+#else
+    ArduinoOTA.begin(false);
+#endif
     server.begin();
   }
 
