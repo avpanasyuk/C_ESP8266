@@ -116,7 +116,7 @@ public:
       content += "</ol></p><p><b>WiFi networks:</b></p>";
       content += "<p>";
       content += WiFi_Around;
-      content += String(F("</p><form method='get' action='config'><label>SSID: </label><input name='ssid' length=")) + (STR_SIZE - 1) +
+      content += String(F("</p><form method='get' action='/config'><label>SSID: </label><input name='ssid' length=")) + (STR_SIZE - 1) +
         " value='" + WiFi.SSID() + "'><input name='pass' length=" + (STR_SIZE - 1) +
         "><input type='submit'></html>";
       request->send(200, "text/html", content);
