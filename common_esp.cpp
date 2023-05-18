@@ -5,10 +5,9 @@ bool avp::GET_succeed = false;
 String avp::GET_responce;
 
 void avp::FinishTalk() {
-  String GET_responce;
-  GET_succeed = true;  GET_responce.clear();
+   GET_succeed = true;  avp::GET_responce.clear();
   delay(100);
-  while(client.available()) GET_responce += client.read();
+  while(client.available()) avp::GET_responce += client.read();
   if(!client.connected()) client.stop();
 } // FinishTalk
 
