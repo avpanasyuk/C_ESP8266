@@ -21,6 +21,6 @@ namespace avp {
     if(avp::client.printf("GET " format " HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", \
       ##__VA_ARGS__, server) > 0) \
       avp::FinishTalk(); else  avp::StopClient(); \
-  } else debug_puts("Connect failed!"); }while(0)
+  } else debug_puts("HTML_GET_PRINTF connect failed!"); }while(0)
 
 
