@@ -7,13 +7,12 @@
 
 #pragma once
 
+#include "../C_ESP/board_no_server.h"
+
 #if defined(ESP8266)
-#include <ESP8266WiFi.h>  // https://github.com/esp8266/Arduino
 #include <ESPAsyncTCP.h>
-#define WIFI_AUTH_OPEN AUTH_OPEN
 #else
 #include <AsyncTCP.h>
-#include <WiFi.h>
 #endif
 
 #include <ESPAsyncWebServer.h>
@@ -25,32 +24,11 @@
 
 #include "../C_General/Error.h"
 
-struct ESP_board {
-  enum ConnectionStatus_t {
-    IDLE,
-    TRYING_TO_CONNECT,
-    AP_MODE,
-    CONNECTED
-  };
-
-static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
-AsyncWebServer server;
+struct ESP_board: public ESP_board_no_server {
+  AsyncWebServer server;
 
 protected:
-  void (*status_indication_func)(enum ConnectionStatus_t);
-
-  String WiFi_Around;
-  IPAddress ip;
-  const char *Name;
   const char *Version;
-
-  void post_connection() {
-    ip = WiFi.localIP();
-    debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
-    status_indication_func(CONNECTED);
-    WiFi.setAutoConnect(true);
-    WiFi.setAutoReconnect(true);
-  }  // post_connection
 
 public:
   /**
@@ -67,35 +45,9 @@ public:
     void (*status_indication_func_)(enum ConnectionStatus_t),
     const String AddUsage = "",
     const char *default_ssid = nullptr,
-    const char *default_pass = nullptr): server(80), status_indication_func(status_indication_func_), WiFi_Around(scan()),
-    Name(Name_), Version(Version_) {
-    // if AutoConnect is enabled the WIFI library tries to connect to the last WiFi configuration that it remembers
-    // on startup
-    if(WiFi.getAutoConnect()) {
-      status_indication_func(TRYING_TO_CONNECT);
-      WiFi.waitForConnectResult();
-    }
-
-    // trying default WiFI configuration if present
-    if(!WiFi.isConnected() && default_ssid != nullptr && default_pass != nullptr) {
-      WiFi.mode(WIFI_STA);
-      WiFi.hostname(Name);
-      WiFi.begin(default_ssid, default_pass);
-      status_indication_func(TRYING_TO_CONNECT);
-      WiFi.waitForConnectResult();
-    } else
-      post_connection();
-
-    // if still not connected switching to AP mode
-    if(!WiFi.isConnected()) {
-      WiFi.mode(WIFI_AP);
-      WiFi.softAP(Name, "");
-      ip = WiFi.softAPIP();
-      status_indication_func(AP_MODE);
-      debug_printf("Connecting in AP mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
-    } else
-      post_connection();
-
+    const char *default_pass = nullptr) : ESP_board_no_server(Name_, status_indication_func_, default_ssid, default_pass),
+    server(80), Version(Version_) {
+    
     // setup Web Server
     server.on("/", HTTP_GET, [&, AddUsage](AsyncWebServerRequest *request) {
       String content;
@@ -173,40 +125,9 @@ public:
 
 #ifdef DO_ELEGANT_OTA
     AsyncElegantOTA.begin(&server);  // Start ElegantOTA
-#else
-    ArduinoOTA.begin(false);
 #endif
     server.begin();
   }
-
-public:
-  static const String scan() {
-    String WiFi_Around;
-    int n = WiFi.scanNetworks();
-
-    WiFi_Around = "<ol>";
-    for(int i = 0; i < n; ++i) {
-      // Print SSID and RSSI for each network found
-      WiFi_Around += "<li>";
-      WiFi_Around += WiFi.SSID(i);
-      WiFi_Around += " (";
-      WiFi_Around += WiFi.RSSI(i);
-
-      WiFi_Around += ")";
-      WiFi_Around += (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " " : "*";
-      WiFi_Around += "</li>";
-    }
-    WiFi_Around += "</ol>";
-    return WiFi_Around;
-  }  // scan
 };   // ESP_board
 
-static const String GenerateHTML(const String &html_body, uint16_t AutoRefresh_s = 0, const char *title = nullptr) {
-  String out = "<!DOCTYPE html><html><head>";
-  if(title != nullptr) out += "<title>" + String(title) + "</title>";
-  if(AutoRefresh_s != 0)
-    out += "<meta http-equiv=\"refresh\" content=\"" + String(AutoRefresh_s) + "\">";
-  out += "</head><body>" + html_body + "</body></html>";
-  return out;
-}  // GenerateAutoRefreshHTML
 
