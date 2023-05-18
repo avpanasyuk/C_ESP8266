@@ -3,6 +3,7 @@
  *
  * @brief class for ESP8266 or ESP32, implements commonly used WiFi functions, including OTA and async server.
  * @details on both board WiFi modules remember the last configuration by it;self, we will rely on it.
+ * @note NOTE!!!!!!!!!!!!!! Should add ArduinoOTA.handle() to main loop !!!!!!!!!!!!!!!!!!!!!!!!
  */
 
 #pragma once
@@ -26,7 +27,7 @@ struct ESP_board_no_server {
     CONNECTED
   };
 
-static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
+  static constexpr uint8_t STR_SIZE = 32;  //< ssid and password string sizes
 
 protected:
   void (*status_indication_func)(enum ConnectionStatus_t);
@@ -34,7 +35,7 @@ protected:
   String WiFi_Around;
   IPAddress ip;
   const char *Name;
-  
+
   void post_connection() {
     ip = WiFi.localIP();
     debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
@@ -55,7 +56,7 @@ public:
   ESP_board_no_server(const char *Name_,
     void (*status_indication_func_)(enum ConnectionStatus_t),
     const char *default_ssid = nullptr,
-    const char *default_pass = nullptr): status_indication_func(status_indication_func_), WiFi_Around(scan()),
+    const char *default_pass = nullptr) : status_indication_func(status_indication_func_), WiFi_Around(scan()),
     Name(Name_) {
     // if AutoConnect is enabled the WIFI library tries to connect to the last WiFi configuration that it remembers
     // on startup
@@ -84,6 +85,24 @@ public:
     } else
       post_connection();
 
+
+    ArduinoOTA.onStart([]() {
+      debug_puts("Start");
+    });
+    ArduinoOTA.onEnd([]() {
+      debug_puts("\nEnd");
+    });
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+      debug_printf("Progress: %u%%\r", (progress / (total / 100)));
+    });
+    ArduinoOTA.onError([](ota_error_t error) {
+      debug_printf("Error[%u]: ", error);
+      if(error == OTA_AUTH_ERROR) debug_puts("Auth Failed");
+      else if(error == OTA_BEGIN_ERROR) debug_puts("Begin Failed");
+      else if(error == OTA_CONNECT_ERROR) debug_puts("Connect Failed");
+      else if(error == OTA_RECEIVE_ERROR) debug_puts("Receive Failed");
+      else if(error == OTA_END_ERROR) debug_puts("End Failed");
+    });
     ArduinoOTA.begin(false);
   }
 

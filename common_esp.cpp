@@ -19,7 +19,7 @@ void avp::StopClient() {
   while(client.connected()) delay(0);
 } // StopClient
 
-const String avp::GenerateHTML(const String &html_body, uint16_t AutoRefresh_s = 0, const char *title = nullptr) {
+const String avp::GenerateHTML(const String &html_body, uint16_t AutoRefresh_s, const char *title) {
   String out = "<!DOCTYPE html><html><head>";
   if(title != nullptr) out += "<title>" + String(title) + "</title>";
   if(AutoRefresh_s != 0)
