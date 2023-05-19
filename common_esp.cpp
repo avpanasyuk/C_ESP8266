@@ -1,14 +1,21 @@
 #include <../C_ESP/General.h>
 
 namespace avp {
+#if defined(AVP_SECURE_GET)
+  WiFiClientSecure client;
+#else
   WiFiClient client;
+#endif
   bool GET_succeed = false;
   String GET_responce;
 
   void FinishTalk() {
     GET_succeed = true;  GET_responce.clear();
-    delay(100);
+    // we are waiting until either response reaches or server closes connection
+    while(client.connected() && client.available() == 0) delay(1);
+    // if we have response let's read it
     while(client.available()) GET_responce += char(client.read());
+    // if server closed connection, that't it
     if(!client.connected()) client.stop();
   } // FinishTalk
 
