@@ -38,7 +38,9 @@ protected:
 
   void post_connection() {
     ip = WiFi.localIP();
-    debug_printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+#ifdef DEBUG
+    Serial.printf("Connected in STA mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+#endif
     status_indication_func(CONNECTED);
     WiFi.setAutoConnect(true);
     WiFi.setAutoReconnect(true);
@@ -81,30 +83,40 @@ public:
       WiFi.softAP(Name, "");
       ip = WiFi.softAPIP();
       status_indication_func(AP_MODE);
-      debug_printf("Connecting in AP mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+    #ifdef DEBUG
+      Serial.printf("Connecting in AP mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
+    #endif
     } else
       post_connection();
 
-
     ArduinoOTA.onStart([]() {
-      debug_puts("Start");
+    #ifdef DEBUG
+      // Serial.println("Start");
+    #endif
     });
     ArduinoOTA.onEnd([]() {
-      debug_puts("\nEnd");
+    #ifdef DEBUG
+      // Serial.println("\nEnd");
+    #endif
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-      debug_printf("Progress: %u%%\r", (progress / (total / 100)));
+    #ifdef DEBUG
+      // Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    #endif
     });
+    
     ArduinoOTA.onError([](ota_error_t error) {
-      debug_printf("Error[%u]: ", error);
-      if(error == OTA_AUTH_ERROR) debug_puts("Auth Failed");
-      else if(error == OTA_BEGIN_ERROR) debug_puts("Begin Failed");
-      else if(error == OTA_CONNECT_ERROR) debug_puts("Connect Failed");
-      else if(error == OTA_RECEIVE_ERROR) debug_puts("Receive Failed");
-      else if(error == OTA_END_ERROR) debug_puts("End Failed");
+      Serial.printf("Error[%u]: ", error);
+      if(error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+      else if(error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+      else if(error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+      else if(error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+      else if(error == OTA_END_ERROR) Serial.println("End Failed");
     });
     ArduinoOTA.begin(false);
   }
+
+  String getIP() const { return ip.toString();  }
 
 public:
   static const String scan() {
