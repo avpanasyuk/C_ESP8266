@@ -1,7 +1,5 @@
 #pragma once
 
-#define AVP_SECURE_GET 1
-
 #if defined(AVP_SECURE_GET)
 #include <WiFiClientSecure.h>
 #else
@@ -32,9 +30,8 @@ namespace avp {
 
 #define HTML_GET_PRINTF(server, format,...) do{ avp::GET_succeed = false; \
   if(avp::client.connect(server, avp::ServerPort)) {\
-    if(avp::client.printf("GET "  format " HTTP/1.1\r\nHost: %s\r\nUser-Agent: IrrigationController\r\nConnection: close\r\n\r\n", \
-      ##__VA_ARGS__, server) > 0) \
-      avp::FinishTalk(); else  avp::StopClient(); \
-  } else debug_puts("HTML_GET_PRINTF connect failed!"); }while(0)
+    if(avp::client.printf("GET "  format " HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", \
+      ##__VA_ARGS__, server) > 0) avp::FinishTalk(); else  avp::StopClient(); \
+  } else Serial.println("HTML_GET_PRINTF connect failed!"); }while(0)
 
 
