@@ -29,7 +29,8 @@ struct ESP_board: public ESP_board_no_server {
 
 protected:
   const char *Version;
-
+  String WiFi_Around;
+  
 public:
   /**
    * @brief initializes esp8266 or esp32 board
@@ -46,7 +47,7 @@ public:
     const String AddUsage = "",
     const char *default_ssid = nullptr,
     const char *default_pass = nullptr) : ESP_board_no_server(Name_, status_indication_func_, default_ssid, default_pass),
-    server(80), Version(Version_) {
+    server(80), Version(Version_), WiFi_Around(scan()) {
     
     // setup Web Server
     server.on("/", HTTP_GET, [&, AddUsage](AsyncWebServerRequest *request) {
@@ -128,6 +129,27 @@ public:
 #endif
     server.begin();
   }
+
+public:
+  static const String scan() {
+    String WiFi_Around;
+    int n = WiFi.scanNetworks();
+
+    WiFi_Around = "<ol>";
+    for(int i = 0; i < n; ++i) {
+      // Print SSID and RSSI for each network found
+      WiFi_Around += "<li>";
+      WiFi_Around += WiFi.SSID(i);
+      WiFi_Around += " (";
+      WiFi_Around += WiFi.RSSI(i);
+
+      WiFi_Around += ")";
+      WiFi_Around += (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " " : "*";
+      WiFi_Around += "</li>";
+    }
+    WiFi_Around += "</ol>";
+    return WiFi_Around;
+  }  // scan
 };   // ESP_board
 
 

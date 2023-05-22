@@ -30,7 +30,7 @@ namespace avp {
 
 #define HTML_GET_PRINTF(server, format,...) do{ avp::GET_succeed = false; \
   if(avp::client.connect(server, avp::ServerPort)) {\
-    if(avp::client.printf("GET "  format " HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", \
+    if(avp::client.printf("GET "  format " HTTP/1.1\r\nHost: %s\r\nUser-Agent: (panasyuk@yahoo.com)\r\nConnection: close\r\n\r\n", \
       ##__VA_ARGS__, server) > 0) avp::FinishTalk(); else  avp::StopClient(); \
   } else Serial.println("HTML_GET_PRINTF connect failed!"); }while(0)
 
