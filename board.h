@@ -134,6 +134,26 @@ public:
 #endif
     server.begin();
   }
+public:
+  static const String scan() {
+    String WiFi_Around;
+    int n = WiFi.scanNetworks();
+
+    WiFi_Around = "<ol>";
+    for(int i = 0; i < n; ++i) {
+      // Print SSID and RSSI for each network found
+      WiFi_Around += "<li>";
+      WiFi_Around += WiFi.SSID(i);
+      WiFi_Around += " (";
+      WiFi_Around += WiFi.RSSI(i);
+
+      WiFi_Around += ")";
+      WiFi_Around += (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " " : "*";
+      WiFi_Around += "</li>";
+    }
+    WiFi_Around += "</ol>";
+    return WiFi_Around;
+  }  // scan
 };   // ESP_board
 
 

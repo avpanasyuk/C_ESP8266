@@ -39,7 +39,6 @@ struct ESP_board_no_server {
 protected:
   void (*status_indication_func)(enum ConnectionStatus_t);
 
-  String WiFi_Around;
   IPAddress ip;
   const char *Name;
 
@@ -66,8 +65,7 @@ public:
     void (*status_indication_func_)(enum ConnectionStatus_t),
     const char *default_ssid = nullptr,
     const char *default_pass = nullptr,
-    bool ArduinoOTAmDNS = false) : status_indication_func(status_indication_func_), WiFi_Around(scan()),
-    Name(Name_) {
+    bool ArduinoOTAmDNS = false) : status_indication_func(status_indication_func_), Name(Name_) {
     // if AutoConnect is enabled the WIFI library tries to connect to the last WiFi configuration that it remembers
     // on startup
     if(WiFi.getAutoConnect()) {
@@ -100,19 +98,19 @@ public:
 #if DO_OTA
     // !NOTE Do not forget to put ArduinoOTA.handle() in the loop()
     ArduinoOTA.onStart([]() {
-# ifdef DEBUG
-      // Serial.println("Start");
-# endif
+#ifdef DEBUG
+      Serial.println("Start");
+#endif
     });
     ArduinoOTA.onEnd([]() {
-# ifdef DEBUG
-      // Serial.println("\nEnd");
-# endif
+#ifdef DEBUG
+      Serial.println("\nEnd");
+#endif
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-# ifdef DEBUG
-      // Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-# endif
+#ifdef DEBUG
+      Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+#endif
     });
 
     ArduinoOTA.onError([](ota_error_t error) {
@@ -128,26 +126,5 @@ public:
   }
 
   String getIP() const { return ip.toString(); }
-
-public:
-  static const String scan() {
-    String WiFi_Around;
-    int n = WiFi.scanNetworks();
-
-    WiFi_Around = "<ol>";
-    for(int i = 0; i < n; ++i) {
-      // Print SSID and RSSI for each network found
-      WiFi_Around += "<li>";
-      WiFi_Around += WiFi.SSID(i);
-      WiFi_Around += " (";
-      WiFi_Around += WiFi.RSSI(i);
-
-      WiFi_Around += ")";
-      WiFi_Around += (WiFi.encryptionType(i) == WIFI_AUTH_OPEN) ? " " : "*";
-      WiFi_Around += "</li>";
-    }
-    WiFi_Around += "</ol>";
-    return WiFi_Around;
-  }  // scan
 };   // ESP_board
 
