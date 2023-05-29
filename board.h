@@ -34,6 +34,7 @@ struct ESP_board: public ESP_board_no_server {
 
 protected:
   const char *Version;
+  String WiFi_Around;
 
 public:
   /**
@@ -52,7 +53,7 @@ public:
     const char *default_ssid = nullptr,
     const char *default_pass = nullptr,
     bool ArduinoOTAmDNS = false) : ESP_board_no_server(Name_, status_indication_func_, default_ssid, default_pass, ArduinoOTAmDNS),
-    server(80), Version(Version_) {
+    server(80), Version(Version_), WiFi_Around(scan())  {
     
     // setup Web Server
     server.on("/", HTTP_GET, [&, AddUsage](AsyncWebServerRequest *request) {
