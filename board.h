@@ -16,10 +16,15 @@
 #endif
 
 #include <ESPAsyncWebServer.h>
-#ifdef DO_ELEGANT_OTA
+
+// !NOTE DO_OTA is handled in C_ESP/board_no_server.h
+
+#ifndef DO_ELEGANT_OTA
+#define DO_ELEGANT_OTA 0 // default off
+#endif
+
+#if DO_ELEGANT_OTA
 #include <AsyncElegantOTA.h>
-#else
-#include <ArduinoOTA.h>
 #endif
 
 #include "../C_General/Error.h"
@@ -45,7 +50,8 @@ public:
     void (*status_indication_func_)(enum ConnectionStatus_t),
     const String AddUsage = "",
     const char *default_ssid = nullptr,
-    const char *default_pass = nullptr) : ESP_board_no_server(Name_, status_indication_func_, default_ssid, default_pass),
+    const char *default_pass = nullptr,
+    bool ArduinoOTAmDNS = false) : ESP_board_no_server(Name_, status_indication_func_, default_ssid, default_pass, ArduinoOTAmDNS),
     server(80), Version(Version_) {
     
     // setup Web Server
@@ -123,7 +129,7 @@ public:
       ESP.restart();
     });
 
-#ifdef DO_ELEGANT_OTA
+#if DO_ELEGANT_OTA
     AsyncElegantOTA.begin(&server);  // Start ElegantOTA
 #endif
     server.begin();

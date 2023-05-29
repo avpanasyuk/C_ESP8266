@@ -15,7 +15,14 @@
 #include <WiFi.h>
 #endif
 
+#ifndef DO_OTA // !!!!!!!!!!!! DO NOT FORGET TO CALL ArduinoOTA.handle() from the loop()
+#define DO_OTA 1 // default on 
+#endif
+
+#if DO_OTA
 #include <ArduinoOTA.h>
+#endif
+
 
 #include "../C_General/Error.h"
 
@@ -58,7 +65,8 @@ public:
   ESP_board_no_server(const char *Name_,
     void (*status_indication_func_)(enum ConnectionStatus_t),
     const char *default_ssid = nullptr,
-    const char *default_pass = nullptr) : status_indication_func(status_indication_func_), WiFi_Around(scan()),
+    const char *default_pass = nullptr,
+    bool ArduinoOTAmDNS = false) : status_indication_func(status_indication_func_), WiFi_Around(scan()),
     Name(Name_) {
     // if AutoConnect is enabled the WIFI library tries to connect to the last WiFi configuration that it remembers
     // on startup
@@ -83,28 +91,30 @@ public:
       WiFi.softAP(Name, "");
       ip = WiFi.softAPIP();
       status_indication_func(AP_MODE);
-    #ifdef DEBUG
+#ifdef DEBUG
       Serial.printf("Connecting in AP mode, IP:%s!\n", (String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3])).c_str());
-    #endif
+#endif
     } else
       post_connection();
 
+#if DO_OTA
+    // !NOTE Do not forget to put ArduinoOTA.handle() in the loop()
     ArduinoOTA.onStart([]() {
-    #ifdef DEBUG
+# ifdef DEBUG
       // Serial.println("Start");
-    #endif
+# endif
     });
     ArduinoOTA.onEnd([]() {
-    #ifdef DEBUG
+# ifdef DEBUG
       // Serial.println("\nEnd");
-    #endif
+# endif
     });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    #ifdef DEBUG
+# ifdef DEBUG
       // Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    #endif
+# endif
     });
-    
+
     ArduinoOTA.onError([](ota_error_t error) {
       Serial.printf("Error[%u]: ", error);
       if(error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
@@ -113,10 +123,11 @@ public:
       else if(error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
       else if(error == OTA_END_ERROR) Serial.println("End Failed");
     });
-    ArduinoOTA.begin(false);
+    ArduinoOTA.begin(ArduinoOTAmDNS);
+#endif
   }
 
-  String getIP() const { return ip.toString();  }
+  String getIP() const { return ip.toString(); }
 
 public:
   static const String scan() {
