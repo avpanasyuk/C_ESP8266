@@ -1,13 +1,15 @@
 #define _GNU_SOURCE
 #include <cstring>
-#include <../C_ESP/General.h>
+#include "..\C_ESP\General.h"
 
 namespace avp {
-  const String GenerateHTML(const String &html_body, uint16_t AutoRefresh_s, const char *title) {
-    String out = F("<!DOCTYPE html><html><head>");
+  const String &GenerateHTML(const String &html_body, uint16_t AutoRefresh_s, const char *title) {
+    static String out;
+    out.clear();
+    out += F("<!DOCTYPE html><html><head>");
     if(title != nullptr) out += "<title>" + String(title) + "</title>";
     if(AutoRefresh_s != 0)
-      out += F("<meta http-equiv=\"refresh\" content=\"") + String(AutoRefresh_s) + "\">";
+      out += "<meta http-equiv=\"refresh\" content=\"" + String(AutoRefresh_s) + "\">";
     out += "</head><body>" + html_body + "</body></html>";
     return out;
   }  // GenerateAutoRefreshHTML
@@ -17,28 +19,19 @@ namespace avp {
  *
  * @param Message - like "/pin?i=5&set=1"
  */
-  static const char *SendGET_(WiFiClient *pClient, const char *server, String Message, uint16_t port) {// --------------- CHECK PUMP POWER ------------------------------
+  static const char *SendGET_(WiFiClient *pClient, const char *server, const String &Message, uint16_t port,
+    uint32_t Timeout_ms = 10000) {
     static String GET_responce;
 
     if(pClient->connect(server, port)) {
-      pClient->print("GET " + Message + F(" HTTP/1.1\r\nHost: ") + server + F("\r\nConnection: close\r\n\r\n"));
+      pClient->printf("GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: ff\r\nConnection: close\r\n\r\n", Message.c_str(), server);
+      
       // we are waiting until either response reaches or server closes connection
-#if 0
-      while(pClient->connected() && pClient->available() == 0) delay(1);
-      // if we have response let's read it
-      GET_responce.reserve(pClient->available());
-      while(pClient->available()) GET_responce += char(pClient->read());
-      // if server closed connection, that't it
-#endif
-      auto Timeout = millis() + 10000;
+      auto Timeout = millis() + Timeout_ms;
       GET_responce.clear();
-      while(pClient->connected()) {
-        while(pClient->available()) GET_responce += char(pClient->read());
-        if(millis() > Timeout) {
-          GET_responce.clear();
-          break;
-        }
-      }
+      while(pClient->connected() && millis() < Timeout)
+        while(pClient->available())
+          GET_responce += char(pClient->read());
 
       pClient->stop();
       static const char *cl = "content-length:";
@@ -62,17 +55,17 @@ namespace avp {
  *
  * @param Message - like "/pin?i=5&set=1"
  */
-  const char *SendGET(const char *server, String Message, uint16_t port, unsigned long Timeout) {
+  const char *SendGET(const char *server, const String &Message, uint16_t port, unsigned long Timeout) {
     static WiFiClient c;
     c.setTimeout(Timeout);
-    return SendGET_(&c, server, Message, port);
+    return SendGET_(&c, server, Message, port, Timeout);
   } // SendGET
 
-  const char *SendGET_Secure(const char *server, String Message, uint16_t port, unsigned long Timeout) {
+  const char *SendGET_Secure(const char *server, const String &Message, uint16_t port, unsigned long Timeout) {
     static WiFiClientSecure c;
     c.setInsecure();
     c.setTimeout(Timeout);
-    return SendGET_(&c, server, Message, port);
+    return SendGET_(&c, server, Message, port, Timeout);
   } // SendGET_Secure
 }
 
