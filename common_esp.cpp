@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <cstring>
-#include "..\C_ESP\General.h"
+#include "C_General\General.h"
+#include "C_ESP\General.h"
 
 namespace avp {
   const String &GenerateHTML(const String &html_body, uint16_t AutoRefresh_s, const char *title) {
