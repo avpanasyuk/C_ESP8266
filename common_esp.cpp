@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 #include <cstring>
-#include "..\C_ESP\General.h"
+#include "C_ESP\General.h"
 
 namespace avp {
   const String &GenerateHTML(const String &html_body, uint16_t AutoRefresh_s, const char *title) {
@@ -20,7 +20,7 @@ namespace avp {
  * @param Message - like "/pin?i=5&set=1"
  */
   static const char *SendGET_(WiFiClient *pClient, const char *server, const String &Message, uint16_t port,
-    uint32_t Timeout_ms = 10000) {
+    uint32_t Timeout_ms) {
     static String GET_responce;
 
     if(pClient->connect(server, port)) {
