@@ -24,6 +24,8 @@ namespace avp {
     uint32_t Timeout_ms = 10000) {
     static String GET_responce;
 
+    pClient->setTimeout(Timeout_ms);
+
     if(pClient->connect(server, port)) {
       pClient->printf("GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: ff\r\nConnection: close\r\n\r\n", Message.c_str(), server);
       
