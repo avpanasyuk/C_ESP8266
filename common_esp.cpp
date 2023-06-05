@@ -1,6 +1,5 @@
 #define _GNU_SOURCE
 #include <cstring>
-#include "C_General\General.h"
 #include "C_ESP\General.h"
 
 namespace avp {
@@ -21,10 +20,8 @@ namespace avp {
  * @param Message - like "/pin?i=5&set=1"
  */
   static const char *SendGET_(WiFiClient *pClient, const char *server, const String &Message, uint16_t port,
-    uint32_t Timeout_ms = 10000) {
+    uint32_t Timeout_ms) {
     static String GET_responce;
-
-    pClient->setTimeout(Timeout_ms);
 
     if(pClient->connect(server, port)) {
       pClient->printf("GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: ff\r\nConnection: close\r\n\r\n", Message.c_str(), server);
