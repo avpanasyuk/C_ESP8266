@@ -1,7 +1,7 @@
 #pragma once
 
 #include <WiFiClientSecure.h>
-#include <../C_General/Error.h>
+#include <C_General/Error.h>
 
 namespace avp {
   static constexpr unsigned long DefaultTimeout_ms = 20000; 
