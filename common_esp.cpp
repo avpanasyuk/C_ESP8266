@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include <cstring>
 #include <ESP8266WiFi.h>
 #include "C_General\General_C.h"
@@ -53,20 +52,14 @@ namespace avp {
       while(pClient->connected() && millis() < Timeout)
         while(pClient->available())
           GET_responce += char(pClient->read());
+      
+
+#ifdef DEBUG
+      debug_puts(GET_responce.c_str());
+#endif      
 
       pClient->stop();
-      static const char *cl = "content-length:";
-      const char *r = GET_responce.c_str();
-      const char *p = strcasestr(r, cl);
-      if(p != nullptr) {
-        p += strlen(cl);
-        
-        unsigned int Length;
-        if(sscanf(p, "%u", &Length) == 1) {
-          // debug_printf("%s<br>%u<br>%s", r, Length, r + (strlen(r) - Length));
-          return r + (strlen(r) - Length);
-        }  else debug_printf("Failed to parse '%s'!", p);
-      } else debug_printf("Cannot find '%s' in '%s' (case ignored)", cl, r);
+      return strstr(GET_responce.c_str(), "\r\n\r\n") + 4;
     } else debug_printf("Failed to connect to '%s'!", server);
     return nullptr;
   } // CheckPump
