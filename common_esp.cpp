@@ -1,7 +1,11 @@
 #include <cstring>
+#if defined(ESP8266)
 #include <ESP8266WiFi.h>
+#else
+#include <WiFi.h>
+#endif
 #include "C_General\General_C.h"
-#include "C_ARDUINO\General.h"
+// #include "C_ARDUINO\General.h"
 #include "C_ESP\General.h"
 
 namespace avp {
@@ -40,10 +44,15 @@ namespace avp {
     static String GET_responce;
     pClient->setTimeout(Timeout_ms);
 
+#if defined(ESP8266)
     IPAddress remote_addr;
+
     if(!WiFi.hostByName(server, remote_addr, Timeout_ms))
       debug_printf("WiFi.hostByName for host %s failed!\n", server);
     else if(pClient->connect(remote_addr, port)) {
+#else
+    if(pClient->connect(server, port)) {
+#endif
       pClient->printf("GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: ff\r\nConnection: close\r\n\r\n", Message, server);
       
       // we are waiting until either response reaches or server closes connection
