@@ -126,5 +126,10 @@ public:
   }
 
   String getIP() const { return ip.toString(); }
+  void loop() {
+#if DO_OTA
+    ArduinoOTA.handle();
+#endif
+  } // loop
 };   // ESP_board
 

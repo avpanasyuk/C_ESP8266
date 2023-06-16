@@ -41,7 +41,7 @@ namespace avp {
  */
   static const char *SendGET_(WiFiClient *pClient, const char *server, const char *Message, uint16_t port,
     uint32_t Timeout_ms) {
-    static String GET_responce;
+    static String GET_response;
     pClient->setTimeout(Timeout_ms);
 
 #if defined(ESP8266)
@@ -57,18 +57,18 @@ namespace avp {
       
       // we are waiting until either response reaches or server closes connection
       auto Timeout = millis() + Timeout_ms;
-      GET_responce.clear();
+      GET_response.clear();
       while(pClient->connected() && millis() < Timeout)
         while(pClient->available())
-          GET_responce += char(pClient->read());
+          GET_response += char(pClient->read());
       
 
 #ifdef DEBUG
-      debug_puts(GET_responce.c_str());
+      debug_puts(GET_response.c_str());
 #endif      
 
       pClient->stop();
-      return strstr(GET_responce.c_str(), "\r\n\r\n") + 4;
+      return strstr(GET_response.c_str(), "\r\n\r\n") + 4;
     } else debug_printf("Failed to connect to '%s'!", server);
     return nullptr;
   } // CheckPump
