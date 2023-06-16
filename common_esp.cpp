@@ -38,21 +38,14 @@ namespace avp {
  *@brief sending GET request
  *
  * @param Message - like "/pin?i=5&set=1"
+ * @retval char *response_message if no error 
  */
   static const char *SendGET_(WiFiClient *pClient, const char *server, const char *Message, uint16_t port,
     uint32_t Timeout_ms) {
     static String GET_response;
     pClient->setTimeout(Timeout_ms);
 
-#if defined(ESP8266)
-    IPAddress remote_addr;
-
-    if(!WiFi.hostByName(server, remote_addr, Timeout_ms))
-      debug_printf("WiFi.hostByName for host %s failed!\n", server);
-    else if(pClient->connect(remote_addr, port)) {
-#else
     if(pClient->connect(server, port)) {
-#endif
       pClient->printf("GET %s HTTP/1.1\r\nHost: %s\r\nUser-Agent: ff\r\nConnection: close\r\n\r\n", Message, server);
       
       // we are waiting until either response reaches or server closes connection
@@ -68,7 +61,9 @@ namespace avp {
 #endif      
 
       pClient->stop();
-      return strstr(GET_response.c_str(), "\r\n\r\n") + 4;
+      static const char *headers_end = "\r\n\r\n";
+      const char *response_message = strstr(GET_responce.c_str(), headers_end);
+      if(response_message != nullptr) return response_message + strlen(headers_end);
     } else debug_printf("Failed to connect to '%s'!", server);
     return nullptr;
   } // CheckPump
