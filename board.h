@@ -24,7 +24,7 @@
 #endif
 
 #if DO_ELEGANT_OTA
-#include <AsyncElegantOTA.h>
+#include <AsyncOTA.h>
 #endif
 
 #include "../C_General/Error.h"
@@ -131,7 +131,7 @@ public:
     });
 
 #if DO_ELEGANT_OTA
-    AsyncElegantOTA.begin(&server);  // Start ElegantOTA
+    AsyncOTA.begin(&server);  // Start ElegantOTA
 #endif
     server.begin();
   }
