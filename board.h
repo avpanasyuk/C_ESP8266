@@ -1,7 +1,7 @@
 /**
  * @author Sasha
  *
- * @brief class for ESP8266 or ESP32, implements commonly used WiFi functions, including OTA and async server.
+ * @brief class for ESP8266 or ESP32, implements commonly used WiFi functions, including OTA and ASYNC server.
  * @details on both board WiFi modules remember the last configuration by it;self, we will rely on it.
  */
 
