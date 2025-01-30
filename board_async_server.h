@@ -1,32 +1,42 @@
 /**
  * @author Sasha
  *
- * @brief class for ESP8266 or ESP32, implements commonly used WiFi functions, including OTA and sync server.
+ * @brief class for ESP8266 or ESP32, implements commonly used WiFi functions, including OTA and ASYNC server.
  * @details on both board WiFi modules remember the last configuration by it;self, we will rely on it.
  */
 
 #pragma once
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <WebServer.h>
 #include "C_ESP/board_no_server.h"
-#include "C_General/General.h"
-#include "C_General/Error.h"
 
-struct ESP_board_sync_server: public ESP_board_no_server {
- WebServer server;
+#if defined(ESP8266)
+#include <ESPAsyncTCP.h>
+#else
+#include <AsyncTCP.h>
+#endif
+
+#include <ESPAsyncWebServer.h>
+
+// !NOTE DO_OTA is handled in C_ESP/board_no_server.h
+
+#ifndef DO_ELEGANT_OTA
+#define DO_ELEGANT_OTA 0 // default off
+#endif
+
+#if DO_ELEGANT_OTA
+#include <AsyncOTA.h>
+#endif
+
+#include "../C_General/Error.h"
+
+struct ESP_board_async_server: public ESP_board_no_server {
+  AsyncWebServer server;
 
 protected:
   const char *Version;
-  size_t BufferFilled;
   String WiFi_Around;
-  static constexpr size_t LogBufferSize = 500;
-  
-public:
-  char LogBuffer[LogBufferSize+1]; 
 
+public:
   /**
    * @brief initializes esp8266 or esp32 board
    *
@@ -36,19 +46,17 @@ public:
    * @param default_ssid if stored configuration failed to connect try this one
    * @param default_pass if stored configuration failed to connect try this one
    */
-  ESP_board_sync_server(const char *Name_,
+  ESP_board_async_server(const char *Name_,
     const char *Version_, 
     void (*status_indication_func_)(enum ConnectionStatus_t),
     const String AddUsage = "",
     const char *default_ssid = nullptr,
     const char *default_pass = nullptr,
     bool ArduinoOTAmDNS = false) : ESP_board_no_server(Name_, status_indication_func_, default_ssid, default_pass, ArduinoOTAmDNS),
-    server(80), Version(Version_), BufferFilled(0), WiFi_Around(scan()) {
-
-    LogBuffer[0] = 0;
-
+    server(80), Version(Version_), WiFi_Around(scan())  {
+    
     // setup Web Server
-    server.on("/", HTTP_GET, [&, AddUsage]() {
+    server.on("/", HTTP_GET, [&, AddUsage](AsyncWebServerRequest *request) {
       String content;
       String ipStr = String(ip[0]) + '.' + String(ip[1]) + '.' + String(ip[2]) + '.' + String(ip[3]);
       // debug_printf(Name);
@@ -62,8 +70,7 @@ public:
         "<li> pin?i=n[&mode=(0|1)] - set pin mode</li>"
         "<li> config?ssid=<em>string</em>&pass=<em>string</em></li>"
         "<li> reset - reboots MCU</li>"
-        "<li> update - update firmware page</li>"
-        "<li> log - show debug log</li>");
+        "<li> update - update firmware page</li>");
       content += AddUsage;
       content += "</ol></p><p><b>WiFi networks:</b></p>";
       content += "<p>";
@@ -71,14 +78,14 @@ public:
       content += String(F("</p><form method='get' action='/config'><label>SSID: </label><input name='ssid' length=")) + (STR_SIZE - 1) +
         " value='" + WiFi.SSID() + "'><input name='pass' length=" + (STR_SIZE - 1) +
         "><input type='submit'></html>";
-      server.send(200, "text/html", content);
+      request->send(200, "text/html", content);
     });
 
-    server.on("/config", HTTP_GET, [&]() {  // URL xxx.xxx.xxx.xxx/set?pin=14&value=1
-      String qsid = server.arg("ssid");
-      String qpass = server.arg("pass");
+    server.on("/config", HTTP_GET, [&](AsyncWebServerRequest *request) {  // URL xxx.xxx.xxx.xxx/set?pin=14&value=1
+      String qsid = request->arg("ssid");
+      String qpass = request->arg("pass");
       if(qsid.length() > 0 && qpass.length() > 0) {
-        server.send(200, "text/plain", "WiFI configuration changed, connection is being reistablished!");
+        request->send(200, "text/plain", "WiFI configuration changed, connection is being reistablished!");
         delay(1000);
         WiFi.disconnect();
         delay(1000);
@@ -91,66 +98,44 @@ public:
       }
     });
 
-    server.on("/pin", HTTP_GET, [&]() {  // URL xxx.xxx.xxx.xxx/pin?i=n[&analog][&set=x][&mode=x]
-      if(server.hasArg("i")) {
-        uint8_t Pin = server.arg("i").toInt();
-        bool Analog = server.hasArg("analog");
-        if(server.hasArg("set") || server.hasArg("mode")) {
-          if(server.hasArg("mode")) {
-            pinMode(Pin, server.arg("mode").toInt());
-            server.send(200, "text/plain", "Pin mode is set!");
+    server.on("/pin", HTTP_GET, [&](AsyncWebServerRequest *request) {  // URL xxx.xxx.xxx.xxx/pin?i=n[&analog][&set=x][&mode=x]
+      if(request->hasArg("i")) {
+        uint8_t Pin = request->arg("i").toInt();
+        bool Analog = request->hasArg("analog");
+        if(request->hasArg("set") || request->hasArg("mode")) {
+          if(request->hasArg("mode")) {
+            pinMode(Pin, request->arg("mode").toInt());
+            request->send(200, "text/plain", "Pin mode is set!");
           }
-          if(server.hasArg("set")) {
+          if(request->hasArg("set")) {
             if(Analog)
-              analogWrite(Pin, server.arg("set").toInt());
+              analogWrite(Pin, request->arg("set").toInt());
             else
-              digitalWrite(Pin, server.arg("set").toInt());
-            server.send(200, "text/plain", "Pin is set!");
+              digitalWrite(Pin, request->arg("set").toInt());
+            request->send(200, "text/plain", "Pin is set!");
           }
         } else {
           if(Analog)
-            server.send(200, "text/plain", String("Analog pin #") + Pin + " reads " + analogRead(Pin));
+            request->send(200, "text/plain", String("Analog pin #") + Pin + " reads " + analogRead(Pin));
           else
-            server.send(200, "text/plain", String("Digital pin #") + Pin + " reads " + digitalRead(Pin));
+            request->send(200, "text/plain", String("Digital pin #") + Pin + " reads " + digitalRead(Pin));
         }
       } else
-        server.send(200, "text/plain", "No pin index!");
+        request->send(200, "text/plain", "No pin index!");
     });
 
-    server.on("/reset", HTTP_GET, [&]() {
-      server.send(200, "text/plain", "Resetting ...");
+    server.on("/reset", HTTP_GET, [&](AsyncWebServerRequest *request) {
+      request->send(200, "text/plain", "Resetting ...");
       delay(1000);
       ESP.restart();
     });
 
-    server.on("/log", HTTP_GET, [&]() {
-      server.send(200, "text/plain", LogBuffer);
-      BufferFilled = 0;
-    });
-
+#if DO_ELEGANT_OTA
+    AsyncOTA.begin(&server);  // Start ElegantOTA
+#endif
     server.begin();
   }
 public:
-  void puts_log(const char *s) {
-    if(BufferFilled < LogBufferSize) {
-      strncpy(LogBuffer + BufferFilled, s, LogBufferSize - BufferFilled);
-      if((BufferFilled += strlen(s)) >= LogBufferSize) LogBuffer[BufferFilled = LogBufferSize] = 0;
-    }
-  } // puts_log
-
-  const char *vprintf_log(const char *format, va_list args) {
-    if(BufferFilled < LogBufferSize) {
-       int NumChars = vsnprintf(LogBuffer + BufferFilled, LogBufferSize - BufferFilled, format, args);
-      if(NumChars < 0) return "Wrong format!";   
-      if((BufferFilled += NumChars) >= LogBufferSize) LogBuffer[BufferFilled = LogBufferSize] = 0;
-      return nullptr;
-    } else return "Buffer Overrun!";
-  } // vprintf_log
-
-  PRINTF_WRAPPER(const char *, printf_log, vprintf_log)
-
-  operator WebServer *() { return &server;  }
-
   static const String scan() {
     String WiFi_Around;
     int n = WiFi.scanNetworks();
@@ -172,9 +157,8 @@ public:
   }  // scan
 
   void loop() {
-    server.handleClient();
     ESP_board_no_server::loop();
-  } // loop
-};   // ESP_board
+  } // loop    
+};   // ESP_board_async_server
 
 
