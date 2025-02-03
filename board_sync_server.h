@@ -38,11 +38,11 @@ public:
    */
   ESP_board_sync_server(const char *Name_,
     const char *Version_, 
-    void (*status_indication_func_)(enum ConnectionStatus_t),
+    status_indication_func_t status_indication_func_ = [](enum ConnectionStatus_t) { },
     const String AddUsage = "",
     const char *default_ssid = nullptr,
-    const char *default_pass = nullptr,
-    bool ArduinoOTAmDNS = false) : ESP_board_no_server(Name_, status_indication_func_, default_ssid, default_pass, ArduinoOTAmDNS),
+    const char *default_pass = nullptr) :
+    ESP_board_no_server(Name_, default_ssid, default_pass, status_indication_func_),
     server(80), Version(Version_), BufferFilled(0), WiFi_Around(scan()) {
 
     LogBuffer[0] = 0;
