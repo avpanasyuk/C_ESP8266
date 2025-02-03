@@ -125,16 +125,25 @@ public:
 
     server.on("/log", HTTP_GET, [&]() {
       server.send(200, "text/plain", LogBuffer);
-      BufferFilled = 0;
+      LogBuffer[BufferFilled = 0] = 0;
     });
 
     server.begin();
   }
 public:
+  /**
+   * @brief stores string s into the LogBuffer appending CR
+   *
+   * @param s 
+   */
   void puts_log(const char *s) {
     if(BufferFilled < LogBufferSize) {
       strncpy(LogBuffer + BufferFilled, s, LogBufferSize - BufferFilled);
       if((BufferFilled += strlen(s)) >= LogBufferSize) LogBuffer[BufferFilled = LogBufferSize] = 0;
+      if(BufferFilled < LogBufferSize) {
+        LogBuffer[BufferFilled++] = 13;
+        LogBuffer[BufferFilled] = 0;
+      }
     }
   } // puts_log
 

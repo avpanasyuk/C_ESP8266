@@ -19,8 +19,6 @@
 #define DO_OTA 1 // default on 
 #endif
 
-#include <ESPmDNS.h>
-
 #if DO_OTA
 #include <ArduinoOTA.h>
 #endif
@@ -92,7 +90,7 @@ public:
       }
     }
 
-    debug_puts(MDNS.begin(Name) ? "mDNS responder started" : "Error starting mDNS");
+    // debug_puts(MDNS.begin(Name) ? "mDNS responder started" : "Error starting mDNS");
     
 #if DO_OTA
     ArduinoOTA.onStart([]() {
