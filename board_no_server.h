@@ -75,7 +75,7 @@ public:
     if(WiFi.isConnected()) post_connection();
     else if(default_ssid != nullptr && default_pass != nullptr) { // trying default WiFI configuration if present
       WiFi.mode(WIFI_STA);
-      WiFi.hostname(Name);
+      if(Name != nullptr && Name[0]) WiFi.setHostname(Name); 
       WiFi.begin(default_ssid, default_pass);
       status_indication_func(TRYING_TO_CONNECT);
       WiFi.waitForConnectResult();
@@ -94,7 +94,7 @@ public:
     
 #if DO_OTA
     ArduinoOTA.onStart([]() {
-      debug_puts("Start updating " + (ArduinoOTA.getCommand() == U_FLASH)?"sketch":"fs");
+      debug_puts(ArduinoOTA.getCommand() == U_FLASH?"sketch":"fs");
     });
     ArduinoOTA.onEnd([]() { debug_puts("\nEnd"); });
     ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
@@ -115,9 +115,10 @@ public:
 
   String getIP() const { return ip.toString(); }
 
-  void loop() {
+  virtual void loop() {
 #if DO_OTA
     ArduinoOTA.handle();
+    yield();
 #endif
   } // loop
 };   // ESP_board

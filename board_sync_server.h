@@ -180,7 +180,7 @@ public:
     return WiFi_Around;
   }  // scan
 
-  void loop() {
+  virtual void loop() {
     server.handleClient();
     ESP_board_no_server::loop();
   } // loop
